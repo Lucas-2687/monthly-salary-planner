@@ -1,0 +1,19 @@
+{
+  "name": "monthly-salary-planner",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "license": "MIT",
+  "engines": { "node": "24.x" },
+  "scripts": {
+    "dev": "node --env-file-if-exists=.env.local scripts/dev.mjs",
+    "build": "node scripts/build.mjs",
+    "test": "node --test --test-concurrency=1 tests/*.test.mjs",
+    "check:privacy": "node scripts/privacy-check.mjs",
+    "db:migrate": "node --env-file-if-exists=.env.local scripts/migrate.mjs",
+    "auth:setup": "node scripts/auth-setup.mjs",
+    "backup:verify": "node scripts/verify-backup.mjs",
+    "check": "npm run test && npm run check:privacy && npm run build"
+  },
+  "dependencies": { "@libsql/client": "0.18.0" }
+}

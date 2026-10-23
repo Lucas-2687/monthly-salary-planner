@@ -1,0 +1,81 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="light"><meta name="description" content="定额先扣，余额按百分比分配。保存每月工资预算，自动计算各项计划金额。">
+  <title>月薪分配 · 我的月度计划</title><link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <header class="topbar"><div class="brand"><span class="brand-icon" aria-hidden="true"><i></i><i></i><i></i></span><strong>月薪分配</strong><span class="brand-note">我的月度计划</span></div><span id="save-status" class="save-status" role="status">正在连接云端</span></header>
+  <main class="shell">
+    <div class="page-heading"><div><h1>这个月，怎么分配？</h1><p>先安排定额，再按百分比分配余额，计划金额自动算出来。</p></div><div class="month-tools"><label for="month-select" class="sr-only">查看月份</label><select id="month-select"></select><button id="new-month" class="button secondary">新建月份</button><details class="more-menu"><summary aria-label="备份与月份管理">···</summary><div class="menu-panel"><button id="export">导出全部计划</button><button id="import">导入计划备份</button><button id="delete-month" class="danger-text">删除当前月份</button></div></details></div></div>
+    <div id="cloud-warning" class="notice warning" hidden><span id="cloud-message"></span><div class="cloud-actions"><button id="cloud-retry" class="button secondary" hidden>重试保存</button><button id="cloud-remote" class="button secondary" hidden>导出并使用云端记录</button><button id="cloud-overwrite" class="button secondary" hidden>用本页版本覆盖</button><a href="/" target="_top">重新登录</a></div></div>
+    <div class="workspace">
+      <section class="editor" aria-label="预算设置">
+        <div class="income-panel"><div><label for="income">本月到手收入</label><p>填写实际到手金额，所有预算从这里开始。</p></div><div class="income-control"><span aria-hidden="true">¥</span><input id="income" type="number" inputmode="decimal" min="0" max="1000000000" step="0.01" placeholder="0.00" aria-describedby="income-error"><span class="income-unit">元</span></div><p id="income-error" class="field-error" role="alert" hidden></p></div>
+        <div class="budget-panel"><div class="section-heading"><div><h2>预算分配表</h2><p>每项可选定额或百分比，定额项目始终先分配。</p></div><button id="add-category" class="button text-button">＋ 添加项目</button></div>
+          <div class="table-head" aria-hidden="true"><span>项目</span><span>用途</span><span>分配方式</span><span>预算设置</span><span class="align-right">计划金额</span><span></span></div><div id="category-rows"></div>
+          <div class="percentage-line"><span>百分比分配合计 <strong id="percentage-total">0%</strong><small>最多 100%，投资也在项目中按比例安排</small></span><div class="rate-track"><div id="rate-fill"></div></div></div>
+          <div class="formula-note"><span aria-hidden="true">＝</span><p>所有百分比都以<strong>扣除全部定额后的余额</strong>为基数，用途标签不会改变计算顺序。</p></div>
+        </div>
+      </section>
+      <aside class="settlement" aria-label="月度计算结果">
+        <div class="result-heading"><h2>本月分配结果</h2><span id="result-month"></span></div>
+        <div id="gap-notice" class="gap-notice" role="status" hidden></div>
+        <div class="calculation-chain"><div><span>到手收入</span><strong id="result-income">¥ 0.00</strong></div><div><span>先扣全部定额</span><strong id="result-fixed">− ¥ 0.00</strong></div><div class="pool-line"><span>百分比分配余额</span><strong id="result-pool">¥ 0.00</strong></div><div><span>按百分比分配</span><strong id="result-percent">− ¥ 0.00</strong></div></div>
+        <div class="investment-result"><div class="investment-label"><span>待分配余额</span><span id="investment-rate" class="remaining-rate">剩余 100%</span></div><div class="investment-number"><span>¥</span><strong id="investment-value">0.00</strong></div><p id="investment-hint">填写收入后，各项目的计划金额会自动计算。</p></div>
+        <div class="essential-ratio"><div><span>必须支出的定额占收入</span><strong id="required-ratio">—</strong></div><div class="essential-track"><div id="required-fill"></div></div><p id="required-hint">仅统计“必须支出”中设为定额的项目。</p></div>
+        <div class="allocation-view"><h3>资金去向</h3><div class="allocation-bar" id="allocation-bar" aria-hidden="true"></div><div id="allocation-legend"></div></div>
+      </aside>
+    </div>
+    <section class="investment-history" aria-labelledby="history-heading">
+      <div class="section-heading"><div><h2 id="history-heading">股市投入与区间收益</h2><p>金额统一使用美元（USD）；每笔到账单独记录，同一天可多笔。</p></div><div class="history-total"><span>区间复利总收益（USD）</span><strong id="actual-investment-total">待形成可比区间</strong><small id="record-count">尚无记录</small></div></div>
+      <form id="investment-record-form" class="record-form">
+        <div><label for="record-date">到账日期</label><input id="record-date" type="date" required></div>
+        <input id="record-currency" type="hidden" value="USD">
+        <div><label for="record-before">入金前账户总值（USD）</label><input id="record-before" type="number" inputmode="decimal" min="0" max="1000000000" step="0.01" placeholder="0.00" required></div>
+        <div><label for="record-amount">本次实际到账金额（USD）</label><input id="record-amount" type="number" inputmode="decimal" min="0" max="1000000000" step="0.01" placeholder="0.00" required></div>
+        <button type="submit" class="button primary" id="save-record">保存记录</button>
+        <button type="button" class="button secondary" id="cancel-record-edit" hidden>取消编辑</button>
+        <p class="record-note" id="record-note">同一天可添加多笔，按到账日期和录入顺序计算收益。两次记录之间应无其他资金进出。</p>
+        <p class="after-preview">本次入金后总值 <strong id="record-after-preview">—</strong><small>自动作为下一段的起点</small></p>
+      </form>
+      <p id="record-error" class="field-error record-error" role="alert" hidden></p>
+      <div class="formula-note return-formula"><span aria-hidden="true">＝</span><p>区间收益率 ＝（本次入金前总值 − 同币种上次入金后总值）÷ 同币种上次入金后总值。<br>区间复利总收益 ＝ ∏（1 ＋ 每段收益率）− 1。期间应无未记录的入金、取款或账户外分红。</p></div>
+      <section class="current-valuation" aria-labelledby="valuation-heading"><h3 id="valuation-heading">手动估值与收益测算</h3><p>录入当前账户总值后，会计算距最近一次入金后的收益率，并把这段收益接入历史区间。若之后又有入金，旧估值不再计入累计收益，保存新的账户总值即可继续测算。</p>
+        <div class="valuation-grid">
+<form class="valuation-form" id="valuation-usd-form" data-currency="USD"><h3>美元总值 · USD</h3><div class="valuation-fields"><div><label for="valuation-date-usd">估值日期</label><input id="valuation-date-usd" type="date" required></div><div><label for="valuation-total-usd">当前账户总值</label><input id="valuation-total-usd" type="number" inputmode="decimal" min="0" max="1000000000" step="0.01" placeholder="0.00" required></div><button class="button secondary" type="submit">保存并计算</button></div><p id="valuation-error-usd" class="field-error" role="alert" hidden></p><div id="valuation-result-usd" class="valuation-result" aria-live="polite"></div></form>
+        </div>
+      </section>
+      <div class="record-table-wrap" id="performance-table-wrap"><table class="record-table performance-table"><thead><tr><th scope="col">到账日期</th><th scope="col">币种</th><th scope="col">本次入金</th><th scope="col">入金前总值</th><th scope="col">入金后总值</th><th scope="col">区间收益金额 / 起止日期</th><th scope="col">区间收益率</th><th scope="col"><span class="sr-only">操作</span></th></tr></thead><tbody id="investment-record-rows"></tbody></table></div>
+      <details id="annual-summary" class="monthly-summary"><summary>年度收益率（区间复利）</summary><p class="annual-note">各区间按结束日期归入对应年份并复利；跨年区间整体归到结束年份，年度值不等同严格的 1 月 1 日至 12 月 31 日收益。</p><div class="record-table-wrap"><table class="record-table"><thead><tr><th scope="col">年份</th><th scope="col">币种</th><th scope="col">区间数</th><th scope="col">年度复合收益率</th><th scope="col">说明</th></tr></thead><tbody id="annual-investment-rows"></tbody></table></div></details>
+      <details id="monthly-summary" class="monthly-summary"><summary>月度投入汇总（USD）</summary><div class="record-table-wrap"><table class="record-table"><thead><tr><th scope="col">月份</th><th scope="col">币种</th><th scope="col">实际投入</th><th scope="col">截至该月累计投入</th></tr></thead><tbody id="monthly-investment-rows"></tbody></table></div></details>
+      <p id="records-empty" class="records-empty">还没有投入记录。填写到账日期、入金前总值和到账金额，即可记录并计算收益。</p>
+    </section>
+
+    <section class="savings-ledger" aria-labelledby="savings-heading">
+      <div class="section-heading"><div><h2 id="savings-heading">储蓄累积</h2><p>预算里的储蓄是计划金额；这里记录银行卡储蓄的实际存取，余额按流水累计。</p></div><div class="savings-total"><span>当前储蓄余额（人民币）</span><strong id="savings-current">¥ 0.00</strong></div></div>
+      <form id="savings-opening-form" class="savings-opening-form"><label for="savings-opening">期初余额（人民币）</label><input id="savings-opening" type="number" inputmode="decimal" min="0" max="1000000000" step="0.01" placeholder="0.00" required><small>填写开始使用本板块时银行卡里的储蓄余额；从零开始可保持 0。</small><button type="submit" class="button secondary">保存期初余额</button></form>
+      <div class="savings-metrics"><div><span>期初余额</span><strong id="savings-opening-total">¥ 0.00</strong></div><div><span>累计存入</span><strong id="savings-deposits">¥ 0.00</strong></div><div><span>累计取出</span><strong id="savings-withdrawals">¥ 0.00</strong></div></div>
+      <div class="savings-monthly"><h3>本月流水汇总 <span id="savings-month-label"></span></h3><div><span>存入 <strong id="savings-month-in">¥ 0.00</strong></span><span>取出 <strong id="savings-month-out">¥ 0.00</strong></span><span>月末余额 <strong id="savings-month-end">¥ 0.00</strong></span></div></div>
+      <form id="savings-entry-form" class="savings-entry-form">
+        <div><label for="savings-date">日期</label><input id="savings-date" type="date" required></div>
+        <div><label for="savings-type">流水类型</label><select id="savings-type"><option value="surplus_in">月度结余存入</option><option value="overspend_out">超支取出</option><option value="other_in">其他存入</option><option value="other_out">其他取出</option></select></div>
+        <div><label for="savings-amount">金额（人民币）</label><input id="savings-amount" type="number" inputmode="decimal" min="0.01" max="1000000000" step="0.01" placeholder="0.00" required></div>
+        <div><label for="savings-note">备注（选填）</label><input id="savings-note" type="text" maxlength="120" placeholder="例如：本月结余"></div>
+        <button id="savings-save" type="submit" class="button primary">记一笔</button><button id="savings-cancel" type="button" class="button secondary" hidden>取消编辑</button>
+      </form>
+      <p id="savings-error" class="field-error savings-error" role="alert" hidden></p>
+      <div class="record-table-wrap"><table class="record-table savings-table"><thead><tr><th scope="col">日期</th><th scope="col">类型</th><th scope="col">备注</th><th scope="col">存入</th><th scope="col">取出</th><th scope="col">流水后余额</th><th scope="col"><span class="sr-only">操作</span></th></tr></thead><tbody id="savings-rows"></tbody></table></div>
+      <p id="savings-empty" class="records-empty">还没有储蓄流水。先设置期初余额，再记录每次结余存入或超支取出。</p>
+    </section>
+    <footer><p>计划和记录保存在你的私有空间；未同步的修改会暂存在当前浏览器。公共设备使用后请退出。</p><p><button id="restore-backup" class="button secondary" type="button">完整恢复备份</button> <button id="logout" class="button secondary" type="button">退出登录</button></p></footer>
+  </main>
+  <dialog id="month-dialog"><form id="month-form"><div class="dialog-heading"><h2>新建月度计划</h2><button type="button" class="close-dialog" aria-label="关闭">×</button></div><label class="dialog-label" for="new-month-value">计划月份</label><input id="new-month-value" type="month" required><label class="check-label"><input id="copy-previous" type="checkbox" checked>沿用此前最近月份的预算设置</label><p class="dialog-note">收入重新填写；类别、定额和百分比会一起带入，计划金额随收入自动重算。</p><p id="month-error" class="field-error" role="alert" hidden></p><div class="dialog-actions"><button type="button" class="button secondary close-dialog">取消</button><button type="submit" class="button primary">创建计划</button></div></form></dialog>
+  <dialog id="confirm-dialog"><div class="dialog-heading"><h2 id="confirm-title"></h2><button type="button" class="close-dialog" aria-label="关闭">×</button></div><p id="confirm-body"></p><div class="dialog-actions"><button class="button secondary close-dialog" type="button">取消</button><button id="confirm-action" class="button primary" type="button">确认</button></div></dialog>
+  <input type="file" id="import-file" accept="application/json,.json" hidden>
+  <input type="file" id="restore-file" accept="application/json,.json" hidden>
+  <div id="toast" class="toast" role="status" hidden><span id="toast-message"></span><button id="toast-undo" hidden>撤销</button></div>
+  <script type="module" src="app.js"></script>
+</body>
+</html>
