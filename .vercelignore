@@ -1,0 +1,12 @@
+.git/
+node_modules/
+dist/
+.env*
+private/
+backups/
+tests/
+docs/
+*.db
+*.db-*
+*.sqlite*
+*.log

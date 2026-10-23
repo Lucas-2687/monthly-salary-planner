@@ -2,7 +2,14 @@ import { randomBytes } from 'node:crypto';
 import { mkdir, readFile, writeFile } from 'node:fs/promises';
 import { hashPassword } from '../server/auth.mjs';
 let env;
-try { env = await readFile('.env.local', 'utf8'); } catch { env = await readFile('.env.example', 'utf8'); }
+const template = await readFile('.env.example', 'utf8');
+try { env = await readFile('.env.local', 'utf8'); } catch { env = template; }
+// Vercel link may have created an env file containing only its OIDC token.
+// Fill missing template keys without replacing any existing configuration.
+for (const line of template.split(/\r?\n/)) {
+  const key = line.match(/^([A-Z_]+)=/); if (!key) continue;
+  if (!new RegExp(`^${key[1]}=`, 'm').test(env)) env += `\n${line}\n`;
+}
 if (/^PLANNER_PASSWORD_HASH=.+$/m.test(env) || /^SESSION_SECRET=.+$/m.test(env)) throw new Error('Authentication already exists. Back up .env.local and explicitly remove its authentication values before rotating. Rotation signs out existing sessions.');
 const password = randomBytes(24).toString('base64url');
 env = env.replace(/^PLANNER_PASSWORD_HASH=.*$/m, `PLANNER_PASSWORD_HASH=${await hashPassword(password)}`)

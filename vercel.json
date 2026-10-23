@@ -3,6 +3,7 @@
   "framework": null,
   "buildCommand": "npm run build",
   "outputDirectory": "dist",
+  "regions": ["hnd1"],
   "git": { "deploymentEnabled": false },
   "headers": [
     {
