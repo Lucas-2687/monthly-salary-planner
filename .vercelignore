@@ -1,4 +1,6 @@
 .git/
+.agents/
+skills-lock.json
 node_modules/
 dist/
 .env*
